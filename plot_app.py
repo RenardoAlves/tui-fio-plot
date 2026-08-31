@@ -23,10 +23,22 @@ from fio_plot.fiolib import (
     bar2d,
     barhistogram,
     graph2d,
+    dataimport,
 )
 
 
 RWMODES = ["read", "write", "randread", "randwrite", "randrw", "trim"]
+
+def _return_folder_name_basename(filename, settings, override=False):
+    """Show only the innermost folder/file name on the chart x-axis labels,
+    instead of the full path (default fio-plot behavior shows folder + name)."""
+    path = os.path.normpath(filename)
+    base = os.path.basename(path)
+    if not base:
+        base = path
+    return base
+
+dataimport.return_folder_name = _return_folder_name_basename
 VALID_TYPES = ["bw", "iops", "lat", "slat", "clat"]
 
 TMP_ROOT = tempfile.mkdtemp(prefix="fio_plot_automacao_")
@@ -37,7 +49,10 @@ def clear_screen():
 
 
 def pause():
-    input("\n  Press Enter to continue...")
+    try:
+        input("\n  Press Enter to continue...")
+    except (ValueError, EOFError):
+        print()
 
 
 def select_file(title="Select a file", filetypes=None):
@@ -97,10 +112,16 @@ def build_base_settings():
 
 def stage_json_files(filepaths):
     """Copy each selected JSON into its own temp directory.
-    Returns a list of input_directory paths (one per file)."""
+    Directory names match the original JSON filenames (without extension)
+    so fio-plot shows meaningful labels on the chart."""
     dirs = []
+    used_names = set()
     for i, fp in enumerate(filepaths):
-        d = os.path.join(TMP_ROOT, f"run_{i}")
+        name = os.path.splitext(os.path.basename(fp))[0]
+        if name in used_names:
+            name = f"{name}_{i}"
+        used_names.add(name)
+        d = os.path.join(TMP_ROOT, name)
         os.makedirs(d, exist_ok=True)
         shutil.copy2(fp, os.path.join(d, os.path.basename(fp)))
         dirs.append(d)
@@ -145,8 +166,14 @@ def gather_rw_filter(settings):
                  [str(i) for i in range(1, len(RWMODES) + 1)])
     settings["rw"] = RWMODES[int(choice) - 1]
 
-    if settings["rw"] in ("randrw", "rw", "readwrite"):
-        print("\n  Filter (read/write) for randrw/rw data:")
+    if settings["rw"] in ("randrw", "readwrite"):
+        print("\n  Filter (read/write) for randrw data:")
+        print("  [1] read (default)")
+        print("  [2] write")
+        f = ask("  Choose filter:", ["1", "2"], allow_blank=True)
+        settings["filter"] = ["read"] if f != "2" else ["write"]
+    elif settings["rw"] == "rw":
+        print("\n  Filter (read/write) for rw data:")
         print("  [1] read")
         print("  [2] write")
         print("  [3] both (default)")
@@ -215,14 +242,19 @@ def chart_compare(settings):
         settings["numjobs"] = [numjobs.pop()]
         print(f"\n  Auto-detected workload: rw={settings['rw']}, "
               f"iodepth={settings['iodepth'][0]}, numjobs={settings['numjobs'][0]}")
-        print("  [1] read\n  [2] write\n  [3] both (default)")
-        f = ask("  Filter (read/write) for randrw/rw data:", ["1", "2", "3"], allow_blank=True)
-        if f == "1":
-            settings["filter"] = ["read"]
-        elif f == "2":
-            settings["filter"] = ["write"]
+        if settings["rw"] in ("randrw", "readwrite"):
+            print("  [1] read (default)\n  [2] write")
+            f = ask("  Filter (read/write) for randrw data:", ["1", "2"], allow_blank=True)
+            settings["filter"] = ["read"] if f != "2" else ["write"]
         else:
-            settings["filter"] = ["read", "write"]
+            print("  [1] read\n  [2] write\n  [3] both (default)")
+            f = ask("  Filter (read/write) for rw data:", ["1", "2", "3"], allow_blank=True)
+            if f == "1":
+                settings["filter"] = ["read"]
+            elif f == "2":
+                settings["filter"] = ["write"]
+            else:
+                settings["filter"] = ["read", "write"]
     else:
         print("\n  [!] Files have different rw/iodepth/numjobs values.")
         gather_rw_filter(settings)
@@ -306,17 +338,24 @@ def chart_histogram(settings):
         settings["numjobs"] = [int(workload["numjobs"])]
         print(f"\n  Auto-detected workload: rw={settings['rw']}, "
               f"iodepth={settings['iodepth'][0]}, numjobs={settings['numjobs'][0]}")
-        print("\n  Filter (read/write):")
-        print("  [1] read")
-        print("  [2] write")
-        print("  [3] both (default)")
-        f = ask("  Choose filter:", ["1", "2", "3"], allow_blank=True)
-        if f == "1":
-            settings["filter"] = ["read"]
-        elif f == "2":
-            settings["filter"] = ["write"]
+        if settings["rw"] in ("randrw", "readwrite"):
+            print("\n  Filter (read/write):")
+            print("  [1] read (default)")
+            print("  [2] write")
+            f = ask("  Choose filter:", ["1", "2"], allow_blank=True)
+            settings["filter"] = ["read"] if f != "2" else ["write"]
         else:
-            settings["filter"] = ["read", "write"]
+            print("\n  Filter (read/write):")
+            print("  [1] read")
+            print("  [2] write")
+            print("  [3] both (default)")
+            f = ask("  Choose filter:", ["1", "2", "3"], allow_blank=True)
+            if f == "1":
+                settings["filter"] = ["read"]
+            elif f == "2":
+                settings["filter"] = ["write"]
+            else:
+                settings["filter"] = ["read", "write"]
     else:
         gather_rw_filter(settings)
         gather_iodepth_numjobs(settings, require_both=True)
