@@ -3,19 +3,30 @@
 Aplicação console em Python para gerar gráficos a partir de resultados de
 benchmark FIO, reutilizando a biblioteca **fio-plot** como dependência.
 
-A seleção de entrada é **baseada em arquivo** (via diálogo), fazendo o staging
-dos arquivos escolhidos em diretórios temporários, já que o fio-plot trabalha
-internamente com diretórios. O gráfico é salvo como PNG e aberto automaticamente.
+A seleção de entrada é **baseada em diretório**: cada pastas corresponde a um
+run de benchmark (um disco/sistema testado) e contém os arquivos gerados pela
+ferramenta:
+- `resultado.json` — saída JSON completa do fio (`--output-format=json`);
+- `*.N.log` — arquivos de log de IOPS/latência por job (`--write_*_log`).
+
+Os arquivos dentro de cada pasta são detectados e roteados automaticamente de
+acordo com a opção de gráfico escolhida. O gráfico é salvo como PNG e aberto
+automaticamente.
 
 ## Opções disponíveis
 
 1. **2D Chart - Compare Benchmark Results** - Compara resultados de benchmark
-   (IOPS/latência) entre **múltiplos arquivos JSON** selecionados (um por run),
-   a partir de `fio --output-format=json`.
-2. **Line Chart - FIO Log Data** - Gráfico de linha a partir de um **único arquivo
-   de log** do FIO (`--write_*_log`), formato `time,value,direction` por linha.
-3. **Latency Histogram** - Histograma da distribuição de latência a partir de um
-   **único arquivo JSON** do FIO.
+   entre **múltiplos diretórios** (um run por pasta), usando o `resultado.json`
+   de cada um.
+2. **Line Chart - FIO Log Data** - Gráfico de linha a partir dos **arquivos de
+   log** (`*.N.log`) de um único diretório, mostrando read/write ao longo do
+   tempo.
+3. **Latency Histogram** - Histograma da distribuição de latência a partir do
+   `resultado.json` de um único diretório.
+
+Ao selecionar diretórios, o programa oferece atalhos para as pastas de
+benchmark padrão (HD Computador, NVME Kingston, HD Note) ou permite navegar
+por uma pasta via diálogo (tecla `b`), ou usar todas (`all`).
 
 ## Como usar
 
@@ -26,33 +37,23 @@ pip install -r requirements.txt
 python plot_app.py
 ```
 
-O programa apresenta um menu interativo: escolha o tipo de gráfico, selecione o(s)
-arquivo(s) de entrada e informe os parâmetros necessários (rw, iodepth, numjobs,
-etc.). Sem necessidade de passar argumentos em linha de comando.
+O programa apresenta um menu interativo: escolha o tipo de gráfico, selecione
+o(s) diretório(s) de entrada e o programa detecta automaticamente `rw`,
+`iodepth` e `numjobs` a partir do `resultado.json` (sem precisar informar
+manualmente). Apenas o `filter` (read/write) para dados `randrw` precisa ser
+escolhido quando relevante.
 
 ## Requisitos dos dados de entrada
 
-- **JSON** (para 2D compare e histograma): precisa ser saída válida do fio
-  (`fio --output-format=json`) e conter `rw`, `iodepth` e `numjobs` nas job options.
-  Para o histograma, o JSON deve conter os dados de histograma de latência
-  (`latency_ms`, `latency_us`, `latency_ns`).
-- **Logs FIO** (para line chart): nomeados no padrão
-  `[rwmode]-iodepth-[N]-numjobs-[N]_[tipo].[job].log`,
-  ex.: `randwrite-iodepth-8-numjobs-8_bw.1.log`.
+Cada diretório de benchmark deve conter:
 
-### 2D Chart - comparar resultados (JSON)
+- **`resultado.json`** — saída válida do fio (`fio --output-format=json`) com
+  `rw`, `iodepth` e `numjobs` nas job options. Usado na comparação (opção 1) e
+  no histograma (opção 3), além de fornecer o workload para os logs (opção 2).
+- **Arquivos `*.N.log`** — logs FIO por job (formato `time,value,rwt,bs,offset`
+  por linha), nomeados como `iops_iops.1.log`, `iops_iops.2.log`, etc. Usados
+  no gráfico de linha (opção 2).
 
-- Selecione **pelo menos dois** arquivos JSON (um benchmark por arquivo).
-- Defina um único `iodepth` e um único `numjobs` (iguais nos JSONs).
-- O gráfico compara os arquivos (runs) selecionados entre si.
-
-### Line Chart - log data
-
-- Selecione um **único** arquivo de log FIO.
-- Informe `rw`, `iodepth` e `numjobs` que correspondam ao nome do arquivo (padrão acima).
-- Informe o tipo de métrica (`bw`, `iops`, `lat`, etc.).
-
-### Latency histogram (JSON)
-
-- Selecione um **único** arquivo JSON contendo dados de histograma de latência.
-- Informe `iodepth` e `numjobs` que correspondam às job options do JSON.
+No gráfico de linha, o programa lê o tipo de métrica (`bw`, `iops`, `lat`, ...)
+do nome do arquivo de log e copia/renomeia os logs para o padrão que o fio-plot
+espera (`<rw>-iodepth-<N>-numjobs-<M>_<tipo>.<job>.log`), de forma automática.
