@@ -57,3 +57,14 @@ Cada diretório de benchmark deve conter:
 No gráfico de linha, o programa lê o tipo de métrica (`bw`, `iops`, `lat`, ...)
 do nome do arquivo de log e copia/renomeia os logs para o padrão que o fio-plot
 espera (`<rw>-iodepth-<N>-numjobs-<M>_<tipo>.<job>.log`), de forma automática.
+
+## Comando para gerar benchmark válido para aplicação (Windows)
+
+Segue um comando para fazer o benchmark através de um arquivo teste no windows:
+
+```bash
+fio --name=teste --filename=C:\fio_test.dat --size=4G --rw=randrw --rwmixread=70 --bs=4k --iodepth=32 --direct=1 --numjobs=4 --runtime=60 --group_reporting --output=C:\Users\SeuNome\Desktop\resultado.txt --output-format=json --write_iops_log=C:\Users\SeuNome\Desktop\iops
+```
+
+- Lembre de organizar os arquivos após obter os resultados, ou altere os caminhos de --output e --write_iops_log para as pastas desejadas.
+- É necessário usar um arquivo de teste no Windows, pois a interface usada pelo FIO Benchmark para testar os dispositivos, só existe no Linux
