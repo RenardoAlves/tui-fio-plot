@@ -69,13 +69,13 @@ def clear_screen():
 
 def pause():
     try:
-        input("\n  Press Enter to continue...")
+        input("\n  Pressione Enter para continuar...")
     except (ValueError, EOFError):
         print()
 
 
 def ask(prompt, options, allow_blank=False):
-    """Generic textual menu."""
+    """Menu textual genérico."""
     print(prompt)
     while True:
         raw = input("\n  > ").strip()
@@ -83,7 +83,7 @@ def ask(prompt, options, allow_blank=False):
             return None
         if raw in options:
             return raw
-        print(f"  Invalid choice. Enter: {', '.join(options)}")
+        print(f"  Opção inválida. Escolha: {', '.join(options)}")
 
 
 # ========================
@@ -247,7 +247,7 @@ def stage_dir_logs(bench_dir, rw, iodepth, numjobs, logtype):
     return d
 
 
-def browse_directory(title="Select a directory"):
+def browse_directory(title="Selecione uma pasta"):
     root = tk.Tk()
     root.withdraw()
     root.attributes('-topmost', True)
@@ -256,13 +256,13 @@ def browse_directory(title="Select a directory"):
     return path if path else None
 
 
-def gather_directories(multi=False, title="Select benchmark directories"):
-    """Open the directory browser to select benchmark directories.
-    Returns a list of absolute directory paths."""
+def gather_directories(multi=False, title="Selecione as pastas de benchmark"):
+    """Abre o navegador de pastas para escolher diretórios de benchmark.
+    Retorna uma lista de caminhos absolutos."""
 
     def _show_selected():
         if selected:
-            print(f"\n  Selected ({len(selected)}):")
+            print(f"\n  Selecionadas ({len(selected)}):")
             for s in selected:
                 print(f"    - {os.path.basename(s)}")
 
@@ -270,34 +270,34 @@ def gather_directories(multi=False, title="Select benchmark directories"):
 
     if multi:
         print(f"\n  {title}")
-        print("  Pick a folder in the dialog; you can add more afterwards.\n")
+        print("  Escolha uma pasta no diálogo; você pode adicionar mais depois.\n")
         while True:
             path = browse_directory(title)
             if not path:
                 if selected:
                     break
-                print("  No directory selected.")
+                print("  Nenhuma pasta selecionada.")
                 continue
             path = os.path.abspath(path)
             if path in selected:
-                print(f"  [!] Already added: {os.path.basename(path)}")
+                print(f"  [!] Já adicionada: {os.path.basename(path)}")
             else:
                 selected.append(path)
-                print(f"  Added: {os.path.basename(path)}")
+                print(f"  Adicionada: {os.path.basename(path)}")
             _show_selected()
-            more = input("\n  Add another directory? [y/N] > ").strip().lower()
-            if not more or more in ("n", "no", "0"):
+            more = input("\n  Adicionar outra pasta? [s/N] > ").strip().lower()
+            if not more or more in ("n", "nao", "não", "0"):
                 break
-            if more not in ("y", "s", "sim", "yes"):
-                print("  (treating as 'no')")
+            if more not in ("s", "sim", "y", "yes"):
+                print("  (considerado como 'não')")
                 break
     else:
         path = browse_directory(title)
         if path and os.path.isdir(path):
             selected.append(os.path.abspath(path))
-            print(f"  Selected: {os.path.basename(path)}")
+            print(f"  Selecionada: {os.path.basename(path)}")
         else:
-            print("  No directory selected.")
+            print("  Nenhuma pasta selecionada.")
 
     if len(selected) > 1:
         _show_selected()
@@ -309,25 +309,25 @@ def gather_directories(multi=False, title="Select benchmark directories"):
 # ========================
 
 def gather_rw_filter(settings):
-    print("\n  Data mode (--rw):")
+    print("\n  Modo de dados (--rw):")
     for i, mode in enumerate(RWMODES, 1):
         print(f"  [{i}] {mode}")
-    choice = ask("  Choose the mode matching your benchmark:",
+    choice = ask("  Escolha o modo que corresponde ao seu benchmark:",
                  [str(i) for i in range(1, len(RWMODES) + 1)])
     settings["rw"] = RWMODES[int(choice) - 1]
 
     if settings["rw"] in ("randrw", "readwrite"):
-        print("\n  Filter (read/write) for randrw data:")
-        print("  [1] read (default)")
+        print("\n  Filtro (leitura/escrita) para dados randrw:")
+        print("  [1] read (padrão)")
         print("  [2] write")
-        f = ask("  Choose filter:", ["1", "2"], allow_blank=True)
+        f = ask("  Escolha o filtro:", ["1", "2"], allow_blank=True)
         settings["filter"] = ["read"] if f != "2" else ["write"]
     elif settings["rw"] == "rw":
-        print("\n  Filter (read/write) for rw data:")
+        print("\n  Filtro (leitura/escrita) para dados rw:")
         print("  [1] read")
         print("  [2] write")
-        print("  [3] both (default)")
-        f = ask("  Choose filter:", ["1", "2", "3"], allow_blank=True)
+        print("  [3] both (padrão)")
+        f = ask("  Escolha o filtro:", ["1", "2", "3"], allow_blank=True)
         if f == "1":
             settings["filter"] = ["read"]
         elif f == "2":
@@ -337,9 +337,9 @@ def gather_rw_filter(settings):
 
 
 def gather_title_source(settings):
-    title = input("\n  Chart title (enter for default): ").strip()
-    settings["title"] = title or "FIO Benchmark Results"
-    source = input("  Source/author (enter to skip): ").strip()
+    title = input("\n  Título do gráfico (Enter para o padrão): ").strip()
+    settings["title"] = title or "Resultados de Benchmark FIO"
+    source = input("  Fonte/autor (Enter para pular): ").strip()
     settings["source"] = source or None
 
 
@@ -365,22 +365,22 @@ def build_base_settings():
 # ========================
 
 def chart_compare(settings):
-    print("\n  COMPARE BENCHMARK RESULTS (2D Bar Chart)")
-    print("  Select MULTIPLE benchmark directories to compare (one run each).\n")
+    print("\n  COMPARAR RESULTADOS DE BENCHMARK (Gráfico de Barras 2D)")
+    print("  Selecione VÁRIAS pastas de benchmark para comparar (um run por pasta).\n")
 
-    dirs = gather_directories(multi=True, title="Select the benchmark directories to compare")
+    dirs = gather_directories(multi=True, title="Selecione as pastas de benchmark para comparar")
 
     if not dirs:
-        print("\n  No directory selected.")
+        print("\n  Nenhuma pasta selecionada.")
         return
     if len(dirs) < 2:
-        print("\n  [!] Need at least two directories to compare.")
+        print("\n  [!] É necessário selecionar pelo menos duas pastas para comparar.")
         return
 
     staged = {}
     for d in dirs:
         if not find_result_json(d):
-            print(f"\n  [!] No FIO JSON found in: {d}")
+            print(f"\n  [!] Nenhum JSON do FIO encontrado em: {d}")
             return
         staged[d] = stage_dir_json(d)
         print(f"  - {os.path.basename(os.path.normpath(d))}")
@@ -396,15 +396,15 @@ def chart_compare(settings):
         settings["rw"] = rws.pop()
         settings["iodepth"] = [iodepths.pop()]
         settings["numjobs"] = [numjobs.pop()]
-        print(f"\n  Auto-detected workload: rw={settings['rw']}, "
+        print(f"\n  Workload detectado automaticamente: rw={settings['rw']}, "
               f"iodepth={settings['iodepth'][0]}, numjobs={settings['numjobs'][0]}")
         if settings["rw"] in ("randrw", "readwrite"):
-            print("  [1] read (default)\n  [2] write")
-            f = ask("  Filter (read/write) for randrw data:", ["1", "2"], allow_blank=True)
+            print("  [1] read (padrão)\n  [2] write")
+            f = ask("  Filtro (leitura/escrita) para dados randrw:", ["1", "2"], allow_blank=True)
             settings["filter"] = ["read"] if f != "2" else ["write"]
         else:
-            print("  [1] read\n  [2] write\n  [3] both (default)")
-            f = ask("  Filter (read/write) for rw data:", ["1", "2", "3"], allow_blank=True)
+            print("  [1] read\n  [2] write\n  [3] both (padrão)")
+            f = ask("  Filtro (leitura/escrita) para dados rw:", ["1", "2", "3"], allow_blank=True)
             if f == "1":
                 settings["filter"] = ["read"]
             elif f == "2":
@@ -412,7 +412,7 @@ def chart_compare(settings):
             else:
                 settings["filter"] = ["read", "write"]
     else:
-        print("\n  [!] Files have different rw/iodepth/numjobs values.")
+        print("\n  [!] Os arquivos têm valores diferentes de rw/iodepth/numjobs.")
         gather_rw_filter(settings)
         gather_iodepth_numjobs(settings, require_both=True)
 
@@ -428,64 +428,64 @@ def chart_compare(settings):
 
 
 def gather_iodepth_numjobs(settings, require_both=True):
-    print("\n  fio-plot needs iodepth and numjobs that match your data.")
+    print("\n  O fio-plot precisa de iodepth e numjobs que correspondam aos seus dados.")
     if require_both:
         iodepth = ask("  iodepth: ", [str(x) for x in range(1, 129)])
         numjobs = ask("  numjobs: ", [str(x) for x in range(1, 129)])
         settings["iodepth"] = [int(iodepth)]
         settings["numjobs"] = [int(numjobs)]
     else:
-        iodepth = ask("  iodepth (enter for default): ", [str(x) for x in range(1, 129)], allow_blank=True)
-        numjobs = ask("  numjobs (enter for default): ", [str(x) for x in range(1, 129)], allow_blank=True)
+        iodepth = ask("  iodepth (Enter para o padrão): ", [str(x) for x in range(1, 129)], allow_blank=True)
+        numjobs = ask("  numjobs (Enter para o padrão): ", [str(x) for x in range(1, 129)], allow_blank=True)
         settings["iodepth"] = [int(iodepth)] if iodepth else None
         settings["numjobs"] = [int(numjobs)] if numjobs else None
     return settings
 
 
 # ========================
-# 2) Line Chart - FIO Log Data (directory with *.N.log files)
+# 2) Gráfico de Linha - Dados de Log FIO (pasta com arquivos *.N.log)
 # ========================
 
 def chart_log(settings):
-    print("\n  LINE CHART FROM FIO LOG DATA")
-    print("  Select a benchmark directory containing its *.N.log files.\n")
+    print("\n  GRÁFICO DE LINHA A PARTIR DOS LOGS DO FIO")
+    print("  Selecione uma pasta de benchmark contendo seus arquivos *.N.log.\n")
 
-    dirs = gather_directories(multi=False, title="Select the benchmark directory")
+    dirs = gather_directories(multi=False, title="Selecione a pasta de benchmark")
     if not dirs:
-        print("\n  No directory selected.")
+        print("\n  Nenhuma pasta selecionada.")
         return
     bench_dir = dirs[0]
 
     json_file = find_result_json(bench_dir)
     logs = find_log_files(bench_dir)
     if not logs:
-        print(f"\n  [!] No .log files found in: {bench_dir}")
+        print(f"\n  [!] Nenhum arquivo .log encontrado em: {bench_dir}")
         return
     if not json_file:
-        print(f"\n  [!] No FIO JSON found in: {bench_dir} (needed to auto-detect the workload).")
+        print(f"\n  [!] Nenhum JSON do FIO encontrado em: {bench_dir} (necessário para detectar o workload).")
         return
 
     workload = detect_workload(json_file)
     if not all(workload.values()):
-        print("\n  [!] Could not auto-detect rw/iodepth/numjobs from the JSON.")
+        print("\n  [!] Não foi possível detectar rw/iodepth/numjobs a partir do JSON.")
         gather_rw_filter(settings)
         gather_iodepth_numjobs(settings, require_both=True)
     else:
         settings["rw"] = workload["rw"]
         settings["iodepth"] = [int(workload["iodepth"])]
         settings["numjobs"] = [int(workload["numjobs"])]
-        print(f"\n  Auto-detected workload: rw={settings['rw']}, "
+        print(f"\n  Workload detectado automaticamente: rw={settings['rw']}, "
               f"iodepth={settings['iodepth'][0]}, numjobs={settings['numjobs'][0]}")
 
     logtype = detect_log_type(logs[0])
     if not logtype:
-        print("\n  Could not detect the metric type from the log filename.")
-        print("  Types: " + ", ".join(VALID_TYPES))
-        choice = ask("  Choose metric:",
+        print("\n  Não foi possível detectar o tipo de métrica a partir do nome do log.")
+        print("  Tipos: " + ", ".join(VALID_TYPES))
+        choice = ask("  Escolha a métrica:",
                      [str(i) for i in range(1, len(VALID_TYPES) + 1)])
         logtype = VALID_TYPES[int(choice) - 1]
     settings["type"] = [logtype]
-    print(f"  Auto-detected metric type: {logtype}")
+    print(f"  Tipo de métrica detectado: {logtype}")
 
     iodepth = settings["iodepth"][0]
     numjobs = settings["numjobs"][0]
@@ -508,22 +508,22 @@ def chart_log(settings):
 
 
 # ========================
-# 3) Latency Histogram (directory with resultado.json)
+# 3) Histograma de Latência (pasta com resultado.json)
 # ========================
 
 def chart_histogram(settings):
-    print("\n  LATENCY HISTOGRAM")
-    print("  Select a benchmark directory containing its FIO JSON result.\n")
+    print("\n  HISTOGRAMA DE LATÊNCIA")
+    print("  Selecione uma pasta de benchmark contendo o resultado JSON do FIO.\n")
 
-    dirs = gather_directories(multi=False, title="Select the benchmark directory")
+    dirs = gather_directories(multi=False, title="Selecione a pasta de benchmark")
     if not dirs:
-        print("\n  No directory selected.")
+        print("\n  Nenhuma pasta selecionada.")
         return
     bench_dir = dirs[0]
 
     json_file = find_result_json(bench_dir)
     if not json_file:
-        print(f"\n  [!] No FIO JSON found in: {bench_dir}")
+        print(f"\n  [!] Nenhum JSON do FIO encontrado em: {bench_dir}")
         return
 
     print(f"  - {os.path.basename(os.path.normpath(bench_dir))}")
@@ -534,20 +534,20 @@ def chart_histogram(settings):
         settings["rw"] = workload["rw"]
         settings["iodepth"] = [int(workload["iodepth"])]
         settings["numjobs"] = [int(workload["numjobs"])]
-        print(f"\n  Auto-detected workload: rw={settings['rw']}, "
+        print(f"\n  Workload detectado automaticamente: rw={settings['rw']}, "
               f"iodepth={settings['iodepth'][0]}, numjobs={settings['numjobs'][0]}")
         if settings["rw"] in ("randrw", "readwrite"):
-            print("\n  Filter (read/write):")
-            print("  [1] read (default)")
+            print("\n  Filtro (leitura/escrita):")
+            print("  [1] read (padrão)")
             print("  [2] write")
-            f = ask("  Choose filter:", ["1", "2"], allow_blank=True)
+            f = ask("  Escolha o filtro:", ["1", "2"], allow_blank=True)
             settings["filter"] = ["read"] if f != "2" else ["write"]
         else:
-            print("\n  Filter (read/write):")
+            print("\n  Filtro (leitura/escrita):")
             print("  [1] read")
             print("  [2] write")
-            print("  [3] both (default)")
-            f = ask("  Choose filter:", ["1", "2", "3"], allow_blank=True)
+            print("  [3] both (padrão)")
+            f = ask("  Escolha o filtro:", ["1", "2", "3"], allow_blank=True)
             if f == "1":
                 settings["filter"] = ["read"]
             elif f == "2":
@@ -585,18 +585,18 @@ def make_output(settings):
 def open_image(settings):
     path = settings.get("output_filename")
     if path and os.path.exists(path):
-        print(f"\n  Chart saved to: {path}")
+        print(f"\n  Gráfico salvo em: {path}")
         try:
             if os.name == "nt":
                 os.startfile(path)  # noqa: S606
             else:
                 import subprocess
                 subprocess.Popen(["xdg-open", path])
-            print("  Opening chart...")
+            print("  Abrindo gráfico...")
         except Exception as e:  # noqa: BLE001
-            print(f"  Could not auto-open: {e}")
+            print(f"  Não foi possível abrir automaticamente: {e}")
     else:
-        print("\n  [!] Could not locate the output file.")
+        print("\n  [!] Não foi possível localizar o arquivo de saída.")
 
 
 def run_plot(settings, func):
@@ -607,33 +607,34 @@ def run_plot(settings, func):
     except SystemExit:
         pass
     except Exception as e:  # noqa: BLE001
-        print(f"\n  [ERROR] {type(e).__name__}: {e}")
+        print(f"\n  [ERRO] {type(e).__name__}: {e}")
     pause()
 
 
 # ========================
-# Main Menu
+# Menu Principal
 # ========================
 
 def main():
     while True:
         clear_screen()
-        print("=" * 52)
-        print("   FIO PLOT AUTOMATION  (powered by fio-plot, directory-based)")
-        print("=" * 52)
-        print()
-        print("  [1] 2D Chart - Compare Benchmark Results (multiple directories)")
-        print("  [2] Line Chart - FIO Log Data (single directory)")
-        print("  [3] Latency Histogram (single directory)")
-        print()
-        print("  [0] Exit")
-        print()
-        print("=" * 52)
+        width = 56
+        print("╔" + "═" * (width - 2) + "╗")
+        print("║" + "   FIO PLOT AUTOMATION".center(width - 2) + "║")
+        print("║" + "   (powered by fio-plot · baseado em pastas)".center(width - 2) + "║")
+        print("╠" + "═" * (width - 2) + "╣")
+        print("║" + "  [1] Comparar resultados de benchmark (2D)".ljust(width - 2) + "║")
+        print("║" + "      (múltiplas pastas · JSON)".ljust(width - 2) + "║")
+        print("║" + "  [2] Gráfico de linha (logs *.N.log)".ljust(width - 2) + "║")
+        print("║" + "  [3] Histograma de latência (JSON)".ljust(width - 2) + "║")
+        print("╠" + "═" * (width - 2) + "╣")
+        print("║" + "  [0] Sair".ljust(width - 2) + "║")
+        print("╚" + "═" * (width - 2) + "╝")
 
-        choice = input("\n  Choose an option > ").strip()
+        choice = input("\n  Escolha uma opção > ").strip()
 
         if choice == "0":
-            print("\n  Bye!")
+            print("\n  Até logo!")
             sys.exit(0)
         elif choice == "1":
             settings = build_base_settings()
@@ -645,7 +646,7 @@ def main():
             settings = build_base_settings()
             run_plot(settings, chart_histogram)
         else:
-            print("\n  Invalid option.")
+            print("\n  Opção inválida.")
             pause()
 
 
